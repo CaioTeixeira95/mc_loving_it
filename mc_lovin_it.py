@@ -1,5 +1,5 @@
 from itertools import zip_longest, chain
-from functools import reduce
+from functools import reduce, partial
 from random import choices
 from uuid import uuid4
 
@@ -37,6 +37,12 @@ class Customer:
         if age < 65:
             return self.queue[self.get_queue_position(name)]
         return self.preferred_queue[self.get_queue_position(name)]
+    
+    def get_customer_by_order(self, order_number):
+        for customer in self.wait_queue:
+            if customer.get('order') == order_number:
+                return customer
+        return None
 
     def add_wait_queue(self, order_number):
         customer = None
@@ -102,13 +108,11 @@ class Order:
 
     def fulfill_order(self):
         if self.order_queue:
-            order = choices(self.order_queue)
-            print(f'Order nº {order.get("number")} is done')
+            order = choices(self.order_queue)[0]
             self.order_queue = [x for x in self.order_queue if x.get('number') != order.get('number')]
             return order.get('number')
+        return None
 
-        print('No order to call')
-        
 
 customers = Customer()
 
@@ -125,9 +129,9 @@ cs = []
 cs.append(customers.get_customer('Marcelo', 99))
 # cs.append(customers.get_customer('André', 27))
 # cs.append(customers.get_customer('Vini', 21))
-cs.append(customers.get_customer('Vinicius Vieira', 19))
+# cs.append(customers.get_customer('Vinicius Vieira', 19))
 # cs.append(customers.get_customer('Caio Teixeira', 25))
-cs.append(customers.get_customer('Orlando', 10000))
+# cs.append(customers.get_customer('Orlando', 10000))
 
 orders = Order()
 for c in cs:
@@ -136,3 +140,12 @@ for c in cs:
 
 
 customers.print_queue()
+
+for order in iter(orders.fulfill_order, ''):
+    c = customers.get_customer_by_order(order)
+    print(f'Order nº {order} is done')
+    ans = input(f'{c.get('name')}, want to rate our attendance? [y/n]').lower()
+    if ans == 'y':
+        rate = int(input('Enter your rate: '))
+        if 0 < rate <= 5:
+            print(f'Your rating was {rate}. Thanks for your avaliation!')
